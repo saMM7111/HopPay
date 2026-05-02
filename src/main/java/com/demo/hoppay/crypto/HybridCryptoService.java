@@ -5,6 +5,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.security.SecureRandom;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 public class HybridCryptoService {
 	private static final String AES_ALGORITHM = "AES";
@@ -54,5 +56,25 @@ public class HybridCryptoService {
 	}
 
 	public record AesEncryptedPayload(byte[] iv, byte[] ciphertext) {
+	}
+
+	public byte[] encryptAesKey(SecretKey aesKey, PublicKey publicKey) {
+		try {
+			Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+			return cipher.doFinal(aesKey.getEncoded());
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to encrypt AES key", ex);
+		}
+	}
+
+	public byte[] decryptAesKey(byte[] encryptedKey, PrivateKey privateKey) {
+		try {
+			Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+			cipher.init(Cipher.DECRYPT_MODE, privateKey);
+			return cipher.doFinal(encryptedKey);
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to decrypt AES key", ex);
+		}
 	}
 }

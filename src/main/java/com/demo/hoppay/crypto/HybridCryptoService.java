@@ -89,4 +89,15 @@ public class HybridCryptoService {
 			throw new IllegalStateException("Failed to sign payload", ex);
 		}
 	}
+
+	public boolean verifySignature(byte[] payload, byte[] signatureBytes, PublicKey publicKey) {
+		try {
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			signature.initVerify(publicKey);
+			signature.update(payload);
+			return signature.verify(signatureBytes);
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to verify signature", ex);
+		}
+	}
 }

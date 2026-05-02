@@ -7,6 +7,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import java.security.SecureRandom;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
 
 public class HybridCryptoService {
 	private static final String AES_ALGORITHM = "AES";
@@ -75,6 +76,17 @@ public class HybridCryptoService {
 			return cipher.doFinal(encryptedKey);
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to decrypt AES key", ex);
+		}
+	}
+
+	public byte[] signPayload(byte[] payload, PrivateKey privateKey) {
+		try {
+			Signature signature = Signature.getInstance("SHA256withRSA");
+			signature.initSign(privateKey);
+			signature.update(payload);
+			return signature.sign();
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to sign payload", ex);
 		}
 	}
 }

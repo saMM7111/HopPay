@@ -14,14 +14,26 @@ import java.math.BigDecimal;
 public class SettlementService {
 	private final AccountRepository accountRepository;
 	private final TransactionRepository transactionRepository;
+	private final IdempotencyService idempotencyService;
 
-	public SettlementService(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+	public SettlementService(AccountRepository accountRepository,
+							 TransactionRepository transactionRepository,
+							 IdempotencyService idempotencyService) {
 		this.accountRepository = accountRepository;
 		this.transactionRepository = transactionRepository;
+		this.idempotencyService = idempotencyService;
 	}
 
 	@Transactional
 	public void processPayment(PaymentInstruction instruction) {
+		if (instruction.getTxId() == null || instruction.getTxId().isBlank()) {
+			throw new IllegalArgumentException("Transaction id is required");
+		}
+
+		if (!idempotencyService.claim(instruction.getTxId())) {
+			return;
+		}
+
 		Account sender = accountRepository.findByAccountId(instruction.getSender())
 				.orElseThrow(() -> new IllegalArgumentException("Sender account not found"));
 

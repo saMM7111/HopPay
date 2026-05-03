@@ -4,6 +4,7 @@ import com.demo.hoppay.model.AccountRepository;
 import com.demo.hoppay.model.TransactionRepository;
 import com.demo.hoppay.model.Account;
 import com.demo.hoppay.model.PaymentInstruction;
+import com.demo.hoppay.model.Transaction;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,5 +40,14 @@ public class SettlementService {
 
 		accountRepository.save(sender);
 		accountRepository.save(receiver);
+
+		Transaction transaction = new Transaction(
+			instruction.getSender(),
+			instruction.getReceiver(),
+			amount,
+			"SETTLED",
+			java.time.Instant.now()
+		);
+		transactionRepository.save(transaction);
 	}
 }

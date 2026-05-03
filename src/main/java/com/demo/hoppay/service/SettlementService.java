@@ -6,6 +6,7 @@ import com.demo.hoppay.model.Account;
 import com.demo.hoppay.model.PaymentInstruction;
 import com.demo.hoppay.model.Transaction;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -19,6 +20,7 @@ public class SettlementService {
 		this.transactionRepository = transactionRepository;
 	}
 
+	@Transactional
 	public void processPayment(PaymentInstruction instruction) {
 		Account sender = accountRepository.findByAccountId(instruction.getSender())
 				.orElseThrow(() -> new IllegalArgumentException("Sender account not found"));

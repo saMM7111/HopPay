@@ -22,8 +22,8 @@ public class SettlementService {
 		Account sender = accountRepository.findByAccountId(instruction.getSender())
 				.orElseThrow(() -> new IllegalArgumentException("Sender account not found"));
 
-		accountRepository.findByAccountId(instruction.getReceiver())
-				.orElseThrow(() -> new IllegalArgumentException("Receiver account not found"));
+		Account receiver = accountRepository.findByAccountId(instruction.getReceiver())
+			.orElseThrow(() -> new IllegalArgumentException("Receiver account not found"));
 
 		BigDecimal amount = instruction.getAmount();
 		if (amount == null || amount.signum() <= 0) {
@@ -33,5 +33,11 @@ public class SettlementService {
 		if (sender.getBalance().compareTo(amount) < 0) {
 			throw new IllegalStateException("Insufficient funds");
 		}
+
+		sender.setBalance(sender.getBalance().subtract(amount));
+		receiver.setBalance(receiver.getBalance().add(amount));
+
+		accountRepository.save(sender);
+		accountRepository.save(receiver);
 	}
 }

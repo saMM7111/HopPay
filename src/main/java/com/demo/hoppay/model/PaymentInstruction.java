@@ -7,15 +7,17 @@ public class PaymentInstruction {
 	private String sender;
 	private String receiver;
 	private BigDecimal amount;
+	private Long signedAt;
 
 	public PaymentInstruction() {
 	}
 
-	public PaymentInstruction(String txId, String sender, String receiver, BigDecimal amount) {
+	public PaymentInstruction(String txId, String sender, String receiver, BigDecimal amount, Long signedAt) {
 		this.txId = txId;
 		this.sender = sender;
 		this.receiver = receiver;
 		this.amount = amount;
+		this.signedAt = signedAt;
 	}
 
 	public String getTxId() {
@@ -48,5 +50,13 @@ public class PaymentInstruction {
 
 	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
+	}
+
+	public Long getSignedAt() {
+		return signedAt;
+	}
+
+	public void setSignedAt(Long signedAt) {
+		this.signedAt = signedAt;
 	}
 }

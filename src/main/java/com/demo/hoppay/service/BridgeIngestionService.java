@@ -1,6 +1,7 @@
 package com.demo.hoppay.service;
 
 import com.demo.hoppay.crypto.HybridCryptoService;
+import com.demo.hoppay.model.MeshPacket;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -11,5 +12,8 @@ public class BridgeIngestionService {
 	public BridgeIngestionService(HybridCryptoService cryptoService, SettlementService settlementService) {
 		this.cryptoService = cryptoService;
 		this.settlementService = settlementService;
+	}
+
+	public void ingestPacket(MeshPacket packet) {
 	}
 }

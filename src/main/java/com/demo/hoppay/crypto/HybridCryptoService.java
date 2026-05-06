@@ -1,20 +1,27 @@
 package com.demo.hoppay.crypto;
 
+import org.springframework.stereotype.Service;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.util.Base64;
 
+@Service
 public class HybridCryptoService {
 	private static final String AES_ALGORITHM = "AES";
 	private static final String AES_TRANSFORM = "AES/GCM/NoPadding";
 	private static final int AES_KEY_BITS = 256;
 	private static final int GCM_TAG_BITS = 128;
 	private static final int GCM_IV_BYTES = 12;
+	private static final int RSA_ENCRYPTED_KEY_BYTES = 256;
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
@@ -77,6 +84,27 @@ public class HybridCryptoService {
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to decrypt AES key", ex);
 		}
+	}
+
+	public byte[] decryptPayload(String base64Payload, PrivateKey privateKey) {
+		byte[] all = Base64.getDecoder().decode(base64Payload);
+		if (all.length < RSA_ENCRYPTED_KEY_BYTES + GCM_IV_BYTES + (GCM_TAG_BITS / 8)) {
+			throw new IllegalArgumentException("Ciphertext too short");
+		}
+
+		byte[] encryptedKey = new byte[RSA_ENCRYPTED_KEY_BYTES];
+		byte[] iv = new byte[GCM_IV_BYTES];
+		byte[] ciphertext = new byte[all.length - RSA_ENCRYPTED_KEY_BYTES - GCM_IV_BYTES];
+
+		ByteBuffer buffer = ByteBuffer.wrap(all);
+		buffer.get(encryptedKey);
+		buffer.get(iv);
+		buffer.get(ciphertext);
+
+		byte[] aesKeyBytes = decryptAesKey(encryptedKey, privateKey);
+		SecretKey aesKey = new SecretKeySpec(aesKeyBytes, AES_ALGORITHM);
+
+		return decryptAes(new AesEncryptedPayload(iv, ciphertext), aesKey);
 	}
 
 	public byte[] signPayload(byte[] payload, PrivateKey privateKey) {

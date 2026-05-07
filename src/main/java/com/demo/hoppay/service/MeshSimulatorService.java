@@ -11,6 +11,11 @@ import java.util.Random;
 public class MeshSimulatorService {
 	private final List<VirtualDevice> devices = new ArrayList<>();
 	private final Random random = new Random();
+	private final BridgeIngestionService bridgeIngestionService;
+
+	public MeshSimulatorService(BridgeIngestionService bridgeIngestionService) {
+		this.bridgeIngestionService = bridgeIngestionService;
+	}
 
 	public void registerDevice(VirtualDevice device) {
 		devices.add(device);
@@ -38,6 +43,18 @@ public class MeshSimulatorService {
 					receiver.getOfflineQueue().add(packet);
 				}
 			});
+		}
+	}
+
+	public void flushBridges() {
+		for (VirtualDevice device : devices) {
+			if (!device.hasInternet()) {
+				continue;
+			}
+
+			while (!device.getOfflineQueue().isEmpty()) {
+				bridgeIngestionService.ingestPacket(device.getOfflineQueue().poll());
+			}
 		}
 	}
 }

@@ -1,12 +1,18 @@
 package com.demo.hoppay.service;
 
+import com.demo.hoppay.crypto.HybridCryptoService;
 import com.demo.hoppay.model.MeshPacket;
+import com.demo.hoppay.model.PaymentInstruction;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.UUID;
 
 public class VirtualDevice {
 	private final String deviceId;
@@ -54,5 +60,27 @@ public class VirtualDevice {
 
 	public Queue<MeshPacket> getOfflineQueue() {
 		return offlineQueue;
+	}
+
+	public MeshPacket createPayment(String receiver, BigDecimal amount, HybridCryptoService cryptoService) {
+		PaymentInstruction instruction = new PaymentInstruction(
+				UUID.randomUUID().toString(),
+				deviceId,
+				receiver,
+				amount,
+				Instant.now().toEpochMilli()
+		);
+
+		byte[] payloadBytes = (instruction.getTxId() + "|" + instruction.getSender() + "|" +
+				instruction.getReceiver() + "|" + instruction.getAmount() + "|" +
+				instruction.getSignedAt()).getBytes(StandardCharsets.UTF_8);
+
+		byte[] signature = cryptoService.signPayload(payloadBytes, privateKey);
+		String signatureB64 = Base64.getEncoder().encodeToString(signature);
+
+		String encryptedPayload = Base64.getEncoder().encodeToString(payloadBytes);
+		MeshPacket packet = new MeshPacket(0, 5, signatureB64, encryptedPayload);
+		offlineQueue.add(packet);
+		return packet;
 	}
 }

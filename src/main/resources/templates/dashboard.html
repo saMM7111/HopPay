@@ -132,6 +132,29 @@
                 <div class="value" th:text="${totalVolume}">0</div>
             </div>
         </section>
+
+        <section class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="tx : ${transactions}">
+                        <td th:text="${tx.sender}">sender</td>
+                        <td th:text="${tx.receiver}">receiver</td>
+                        <td th:text="${tx.amount}">0</td>
+                        <td class="status" th:text="${tx.status}">SETTLED</td>
+                        <td th:text="${tx.timestamp}">now</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
     </main>
 </body>
 </html>

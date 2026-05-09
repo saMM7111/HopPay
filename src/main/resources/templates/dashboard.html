@@ -121,6 +121,17 @@
 <body>
     <main class="page">
         <h1 class="title">HopPay Dashboard</h1>
+
+        <section class="metrics">
+            <div class="card">
+                <h2>Total Transactions</h2>
+                <div class="value" th:text="${totalTransactions}">0</div>
+            </div>
+            <div class="card">
+                <h2>Total Volume</h2>
+                <div class="value" th:text="${totalVolume}">0</div>
+            </div>
+        </section>
     </main>
 </body>
 </html>

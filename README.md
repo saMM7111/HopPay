@@ -40,40 +40,6 @@ Device creates PaymentInstruction (offline)
 AES-256 encrypts payload → RSA-2048 wraps the AES key → SHA-256 signs the packet
       ↓
 MeshPacket hops between VirtualDevices (simulated BLE)
-
-## How to Run
-
-### Prerequisites
-
-- JDK 17+ installed
-
-### Start the app (Windows)
-
-```cmd
-mvnw.cmd spring-boot:run
-```
-
-### Start the app (Mac/Linux)
-
-```bash
-./mvnw spring-boot:run
-```
-
-Then open: http://localhost:8080/dashboard
-
-## Architecture (High-Level)
-
-1. A sender device creates a payment instruction and encrypts it.
-2. The packet hops through nearby devices (mesh gossip).
-3. A bridge device with internet uploads the packet to the backend.
-4. The backend decrypts, validates, deduplicates, and settles.
-
-## Features
-
-- Hybrid encryption (AES + RSA) to protect payment payloads.
-- Signature verification to reject tampered packets.
-- Idempotent settlement to prevent double spends.
-- A live dashboard showing metrics and the latest transactions.
       ↓
 Bridge receives packet → decrypts → verifies signature
       ↓

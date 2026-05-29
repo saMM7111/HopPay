@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.List;
 import java.util.Random;
 
@@ -30,6 +32,7 @@ public class DemoService {
 		this.meshSimulatorService = meshSimulatorService;
 		this.cryptoService = cryptoService;
 		seedAccounts();
+		seedDevices();
 	}
 
 	private void seedAccounts() {
@@ -41,6 +44,37 @@ public class DemoService {
 		accountRepository.save(new Account("bob@hoppay", new BigDecimal("1400"), "Bob"));
 		accountRepository.save(new Account("carol@hoppay", new BigDecimal("800"), "Carol"));
 		accountRepository.save(new Account("dan@hoppay", new BigDecimal("1800"), "Dan"));
+	}
+
+	private void seedDevices() {
+		if (!meshSimulatorService.getDevices().isEmpty()) {
+			return;
+		}
+
+		KeyPairGenerator generator;
+		try {
+			generator = KeyPairGenerator.getInstance("RSA");
+			generator.initialize(2048);
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to initialize key generation", ex);
+		}
+
+		for (String user : demoUsers) {
+			KeyPair keyPair = generator.generateKeyPair();
+			boolean hasInternet = "dan@hoppay".equals(user);
+			BigDecimal balance = accountRepository.findByAccountId(user)
+					.map(Account::getBalance)
+					.orElse(BigDecimal.ZERO);
+
+			VirtualDevice device = new VirtualDevice(
+					user,
+					hasInternet,
+					keyPair.getPublic(),
+					keyPair.getPrivate(),
+					balance
+			);
+			meshSimulatorService.registerDevice(device);
+		}
 	}
 
 	@Scheduled(fixedDelayString = "${hoppay.demo.tick-ms:5000}")

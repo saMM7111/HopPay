@@ -2,30 +2,35 @@ package com.demo.hoppay.service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 @Service
 public class MeshSimulatorService {
-	private final List<VirtualDevice> devices = new ArrayList<>();
 	private final Random random = new Random();
 	private final BridgeIngestionService bridgeIngestionService;
+	private final DeviceRegistry deviceRegistry;
 
-	public MeshSimulatorService(BridgeIngestionService bridgeIngestionService) {
+	public MeshSimulatorService(BridgeIngestionService bridgeIngestionService,
+						 DeviceRegistry deviceRegistry) {
 		this.bridgeIngestionService = bridgeIngestionService;
+		this.deviceRegistry = deviceRegistry;
 	}
 
 	public void registerDevice(VirtualDevice device) {
-		devices.add(device);
+		deviceRegistry.registerDevice(device);
 	}
 
 	public List<VirtualDevice> getDevices() {
-		return Collections.unmodifiableList(devices);
+		return deviceRegistry.getDevices();
+	}
+
+	public VirtualDevice getDeviceById(String deviceId) {
+		return deviceRegistry.getDevice(deviceId);
 	}
 
 	public void gossipOnce() {
+		List<VirtualDevice> devices = deviceRegistry.getDevices();
 		if (devices.size() < 2) {
 			return;
 		}
@@ -47,7 +52,7 @@ public class MeshSimulatorService {
 	}
 
 	public void flushBridges() {
-		for (VirtualDevice device : devices) {
+		for (VirtualDevice device : deviceRegistry.getDevices()) {
 			if (!device.hasInternet()) {
 				continue;
 			}

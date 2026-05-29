@@ -50,6 +50,7 @@ SettlementService validates balance → debits sender → credits receiver
 Transaction recorded → Dashboard updated
 ```
 ## 📁 Project Structure
+```
 
 src/
 └── main/

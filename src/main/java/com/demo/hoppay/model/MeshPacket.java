@@ -1,6 +1,7 @@
 package com.demo.hoppay.model;
 
 public class MeshPacket {
+	private String senderId;
 	private int hopCount;
 	private int ttl;
 	private String signature;
@@ -9,11 +10,20 @@ public class MeshPacket {
 	public MeshPacket() {
 	}
 
-	public MeshPacket(int hopCount, int ttl, String signature, String encryptedPayload) {
+	public MeshPacket(String senderId, int hopCount, int ttl, String signature, String encryptedPayload) {
+		this.senderId = senderId;
 		this.hopCount = hopCount;
 		this.ttl = ttl;
 		this.signature = signature;
 		this.encryptedPayload = encryptedPayload;
+	}
+
+	public String getSenderId() {
+		return senderId;
+	}
+
+	public void setSenderId(String senderId) {
+		this.senderId = senderId;
 	}
 
 	public int getHopCount() {

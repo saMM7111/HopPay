@@ -24,14 +24,18 @@ public class SettlementService {
 		this.idempotencyService = idempotencyService;
 	}
 
+	/**
+	 * Settles a payment atomically. Returns the recorded {@link Transaction},
+	 * or {@code null} when the txId was already seen (idempotent duplicate).
+	 */
 	@Transactional
-	public void processPayment(PaymentInstruction instruction) {
+	public Transaction processPayment(PaymentInstruction instruction) {
 		if (instruction.getTxId() == null || instruction.getTxId().isBlank()) {
 			throw new IllegalArgumentException("Transaction id is required");
 		}
 
 		if (!idempotencyService.claim(instruction.getTxId())) {
-			return;
+			return null;
 		}
 
 		Account sender = accountRepository.findByAccountId(instruction.getSender())
@@ -62,6 +66,6 @@ public class SettlementService {
 			"SETTLED",
 			java.time.Instant.now()
 		);
-		transactionRepository.save(transaction);
+		return transactionRepository.save(transaction);
 	}
 }

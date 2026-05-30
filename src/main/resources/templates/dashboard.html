@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HopPay Dashboard</title>
     <style>
         :root {
@@ -12,6 +13,9 @@
             --brand-dark: #7a3f10;
             --card: #fff7eb;
             --accent: #e7c28d;
+            --ok: #2f8f4e;
+            --fail: #c0392b;
+            --info: #b5790f;
         }
 
         * {
@@ -31,23 +35,16 @@
             padding: 48px 24px 64px;
         }
 
-        header {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
         .title {
             font-size: 42px;
             letter-spacing: -1px;
-            margin: 0;
+            margin: 0 0 8px;
         }
 
         .subtitle {
             color: var(--muted);
             max-width: 640px;
-            margin: 0;
+            margin: 0 0 32px;
         }
 
         .metrics {
@@ -77,11 +74,28 @@
             color: var(--brand-dark);
         }
 
-        .table-wrap {
+        .panel {
             background: #ffffff;
             border-radius: 22px;
             padding: 24px;
             border: 1px solid #ead4b8;
+            margin-bottom: 24px;
+        }
+
+        .panel h2 {
+            margin: 0 0 16px;
+            font-size: 20px;
+            color: var(--brand-dark);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 820px) {
+            .grid-2 { grid-template-columns: 1fr; }
         }
 
         table {
@@ -107,36 +121,260 @@
             color: var(--brand);
         }
 
-        @media (max-width: 700px) {
-            .title {
-                font-size: 32px;
-            }
-
-            .table-wrap {
-                padding: 16px;
-            }
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
+
+        .device {
+            border: 1px solid var(--accent);
+            border-radius: 14px;
+            padding: 14px;
+            background: var(--card);
+        }
+
+        .device .id {
+            font-weight: 600;
+            color: var(--brand-dark);
+            word-break: break-all;
+        }
+
+        .device .bal {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+
+        .device .meta {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #e9f6ec;
+            color: var(--ok);
+            border: 1px solid #bfe3c8;
+        }
+
+        .badge.offline {
+            background: #f4ece0;
+            color: var(--muted);
+            border-color: var(--accent);
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+            margin: 10px 0 4px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--accent);
+            background: #fffdf8;
+            font: inherit;
+            color: var(--ink);
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .row > * { flex: 1; }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .check input { width: auto; }
+
+        button {
+            margin-top: 16px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: var(--brand);
+            color: #fff;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        button:hover { background: var(--brand-dark); }
+
+        button:disabled { opacity: 0.6; cursor: progress; }
+
+        .form-msg {
+            margin-top: 10px;
+            font-size: 13px;
+            min-height: 18px;
+        }
+
+        .form-msg.err { color: var(--fail); }
+        .form-msg.ok { color: var(--ok); }
+
+        /* Flow timeline */
+        .flow-result {
+            margin-top: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .flow {
+            list-style: none;
+            margin: 16px 0 0;
+            padding: 0;
+        }
+
+        .flow li {
+            position: relative;
+            padding: 10px 0 10px 28px;
+            border-left: 2px solid var(--accent);
+            margin-left: 6px;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: rise 0.35s ease forwards;
+        }
+
+        @keyframes rise {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .flow li::before {
+            content: "";
+            position: absolute;
+            left: -8px;
+            top: 14px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--info);
+            border: 2px solid #fff;
+        }
+
+        .flow li.OK::before { background: var(--ok); }
+        .flow li.FAIL::before { background: var(--fail); }
+        .flow li.INFO::before { background: var(--info); }
+
+        .flow .stage { font-weight: 600; }
+        .flow .detail { font-size: 13px; color: var(--muted); }
+
+        .pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 14px;
+        }
+        .pill.SETTLED { background: #e9f6ec; color: var(--ok); }
+        .pill.DUPLICATE { background: #fbf1d8; color: var(--info); }
+        .pill.FAILED { background: #fbe6e3; color: var(--fail); }
+
+        .empty { color: var(--muted); font-size: 14px; }
     </style>
 </head>
 <body>
     <main class="page">
         <h1 class="title">HopPay Dashboard</h1>
+        <p class="subtitle">Offline UPI payments relayed over a simulated Bluetooth mesh. Add devices, send a
+            payment, and watch it hop to the bridge and settle in real time.</p>
 
         <section class="metrics">
             <div class="card">
                 <h2>Total Transactions</h2>
-                <div class="value" th:text="${totalTransactions}">0</div>
+                <div class="value" id="metric-count" th:text="${totalTransactions}">0</div>
             </div>
             <div class="card">
                 <h2>Total Volume</h2>
-                <div class="value" th:text="${totalVolume}">0</div>
+                <div class="value" id="metric-volume" th:text="${totalVolume}">0</div>
             </div>
         </section>
 
-        <section class="table-wrap">
+        <div class="grid-2">
+            <!-- Devices -->
+            <section class="panel">
+                <h2>Devices</h2>
+                <div class="device-grid" id="device-grid">
+                    <span class="empty">Loading devices…</span>
+                </div>
+
+                <h2>Add Device</h2>
+                <form id="device-form">
+                    <div class="row">
+                        <div>
+                            <label for="d-id">Device ID</label>
+                            <input id="d-id" placeholder="eve@hoppay" required>
+                        </div>
+                        <div>
+                            <label for="d-name">Name</label>
+                            <input id="d-name" placeholder="Eve">
+                        </div>
+                    </div>
+                    <label for="d-balance">Starting Balance (₹)</label>
+                    <input id="d-balance" type="number" min="0" step="1" value="1000">
+                    <label class="check">
+                        <input id="d-internet" type="checkbox">
+                        Has internet (acts as a settlement bridge)
+                    </label>
+                    <button type="submit">Add Device</button>
+                    <div class="form-msg" id="device-msg"></div>
+                </form>
+            </section>
+
+            <!-- Send payment -->
+            <section class="panel">
+                <h2>Send Payment</h2>
+                <form id="payment-form">
+                    <label for="p-sender">From</label>
+                    <select id="p-sender" required></select>
+                    <label for="p-receiver">To</label>
+                    <select id="p-receiver" required></select>
+                    <label for="p-amount">Amount (₹)</label>
+                    <input id="p-amount" type="number" min="1" step="1" value="200" required>
+                    <button type="submit" id="send-btn">Send &amp; Trace Flow</button>
+                    <div class="form-msg" id="payment-msg"></div>
+                </form>
+
+                <div id="flow-box" style="display:none;">
+                    <div class="flow-result">
+                        <span class="pill" id="flow-status"></span>
+                        <span id="flow-summary"></span>
+                    </div>
+                    <ul class="flow" id="flow-steps"></ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- Settlements -->
+        <section class="panel">
+            <h2>Recent Settlements</h2>
             <table>
                 <thead>
                     <tr>
+                        <th>Tx</th>
                         <th>Sender</th>
                         <th>Receiver</th>
                         <th>Amount</th>
@@ -144,8 +382,9 @@
                         <th>Timestamp</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tx-body">
                     <tr th:each="tx : ${transactions}">
+                        <td th:text="${tx.txId}">0</td>
                         <td th:text="${tx.sender}">sender</td>
                         <td th:text="${tx.receiver}">receiver</td>
                         <td th:text="${tx.amount}">0</td>
@@ -156,5 +395,168 @@
             </table>
         </section>
     </main>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        async function loadDevices() {
+            const res = await fetch('/api/devices');
+            const devices = await res.json();
+            renderDevices(devices);
+            renderSelects(devices);
+        }
+
+        function renderDevices(devices) {
+            const grid = $('device-grid');
+            if (!devices.length) {
+                grid.innerHTML = '<span class="empty">No devices yet — add one below.</span>';
+                return;
+            }
+            grid.innerHTML = devices.map(d => `
+                <div class="device">
+                    <div class="id">${escapeHtml(d.deviceId)}</div>
+                    <div class="bal">₹${d.balance}</div>
+                    <div class="meta">
+                        <span class="badge ${d.hasInternet ? '' : 'offline'}">${d.hasInternet ? 'bridge' : 'offline'}</span>
+                        <span>queue: ${d.queueSize}</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderSelects(devices) {
+            const sender = $('p-sender');
+            const receiver = $('p-receiver');
+            const prevS = sender.value, prevR = receiver.value;
+            const opts = devices.map(d =>
+                `<option value="${escapeHtml(d.deviceId)}">${escapeHtml(d.deviceId)} (₹${d.balance})</option>`).join('');
+            sender.innerHTML = opts;
+            receiver.innerHTML = opts;
+            if (prevS) sender.value = prevS;
+            if (prevR) receiver.value = prevR;
+            else if (devices.length > 1) receiver.selectedIndex = 1;
+        }
+
+        async function loadTransactions() {
+            const res = await fetch('/api/transactions');
+            const data = await res.json();
+            $('metric-count').textContent = data.totalTransactions;
+            $('metric-volume').textContent = data.totalVolume;
+            const body = $('tx-body');
+            if (!data.transactions.length) {
+                body.innerHTML = '<tr><td colspan="6" class="empty">No settlements yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = data.transactions.map(t => `
+                <tr>
+                    <td>${t.txId}</td>
+                    <td>${escapeHtml(t.sender)}</td>
+                    <td>${escapeHtml(t.receiver)}</td>
+                    <td>${t.amount}</td>
+                    <td class="status">${escapeHtml(t.status)}</td>
+                    <td>${escapeHtml(t.timestamp)}</td>
+                </tr>`).join('');
+        }
+
+        $('device-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = $('device-msg');
+            msg.className = 'form-msg';
+            msg.textContent = '';
+            const body = {
+                deviceId: $('d-id').value.trim(),
+                name: $('d-name').value.trim(),
+                balance: Number($('d-balance').value || 0),
+                hasInternet: $('d-internet').checked
+            };
+            const res = await fetch('/api/devices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.ok) {
+                msg.className = 'form-msg ok';
+                msg.textContent = 'Added ' + body.deviceId;
+                $('device-form').reset();
+                $('d-balance').value = 1000;
+                await loadDevices();
+            } else {
+                const err = await res.json().catch(() => ({ error: 'Request failed' }));
+                msg.className = 'form-msg err';
+                msg.textContent = err.error || 'Could not add device';
+            }
+        });
+
+        $('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = $('send-btn');
+            const msg = $('payment-msg');
+            msg.className = 'form-msg';
+            msg.textContent = '';
+            btn.disabled = true;
+            const body = {
+                senderId: $('p-sender').value,
+                receiverId: $('p-receiver').value,
+                amount: Number($('p-amount').value || 0)
+            };
+            try {
+                const res = await fetch('/api/payments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                await renderFlow(result);
+                await loadDevices();
+                await loadTransactions();
+            } catch (err) {
+                msg.className = 'form-msg err';
+                msg.textContent = 'Send failed: ' + err;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        async function renderFlow(result) {
+            const box = $('flow-box');
+            const statusEl = $('flow-status');
+            const summary = $('flow-summary');
+            const list = $('flow-steps');
+            box.style.display = 'block';
+            statusEl.className = 'pill ' + result.status;
+            statusEl.textContent = result.status;
+            if (result.status === 'SETTLED') {
+                summary.textContent = ` tx #${result.txId}: ${result.sender} → ${result.receiver} ₹${result.amount}`;
+            } else if (result.status === 'DUPLICATE') {
+                summary.textContent = ' duplicate — already settled';
+            } else {
+                summary.textContent = ` ${result.sender} → ${result.receiver}`;
+            }
+            list.innerHTML = '';
+            // Reveal steps one at a time for an animated journey.
+            for (let i = 0; i < result.steps.length; i++) {
+                const s = result.steps[i];
+                const li = document.createElement('li');
+                li.className = s.status;
+                li.style.animationDelay = (i * 0.05) + 's';
+                li.innerHTML = `<div class="stage">${escapeHtml(s.stage)}</div>` +
+                               `<div class="detail">${escapeHtml(s.detail)}</div>`;
+                list.appendChild(li);
+                await sleep(180);
+            }
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        // Initial load + live refresh (scheduled demo traffic keeps settling).
+        loadDevices();
+        loadTransactions();
+        setInterval(() => { loadDevices(); loadTransactions(); }, 5000);
+    </script>
 </body>
 </html>

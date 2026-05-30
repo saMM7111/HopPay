@@ -1,49 +1,46 @@
 package com.demo.hoppay.service;
 
 import com.demo.hoppay.crypto.HybridCryptoService;
-import com.demo.hoppay.model.Account;
-import com.demo.hoppay.model.AccountRepository;
+import com.demo.hoppay.crypto.ServerKeyHolder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Service
 public class DemoService {
-	private final AccountRepository accountRepository;
+	private final DeviceService deviceService;
 	private final MeshSimulatorService meshSimulatorService;
 	private final HybridCryptoService cryptoService;
+	private final ServerKeyHolder serverKeyHolder;
+	private final ObjectMapper objectMapper;
 	private final Random random = new Random();
-	private final List<String> demoUsers = List.of(
-			"alice@hoppay",
-			"bob@hoppay",
-			"carol@hoppay",
-			"dan@hoppay"
-	);
 
-	public DemoService(AccountRepository accountRepository,
+	// deviceId -> display name; the last one is the online bridge.
+	private final Map<String, String> demoUsers = Map.of(
+			"alice@hoppay", "Alice",
+			"bob@hoppay", "Bob",
+			"carol@hoppay", "Carol",
+			"dan@hoppay", "Dan"
+	);
+	private final List<String> demoOrder = List.of(
+			"alice@hoppay", "bob@hoppay", "carol@hoppay", "dan@hoppay");
+
+	public DemoService(DeviceService deviceService,
 					   MeshSimulatorService meshSimulatorService,
-					   HybridCryptoService cryptoService) {
-		this.accountRepository = accountRepository;
+					   HybridCryptoService cryptoService,
+					   ServerKeyHolder serverKeyHolder,
+					   ObjectMapper objectMapper) {
+		this.deviceService = deviceService;
 		this.meshSimulatorService = meshSimulatorService;
 		this.cryptoService = cryptoService;
-		seedAccounts();
+		this.serverKeyHolder = serverKeyHolder;
+		this.objectMapper = objectMapper;
 		seedDevices();
-	}
-
-	private void seedAccounts() {
-		if (accountRepository.count() > 0) {
-			return;
-		}
-
-		accountRepository.save(new Account("alice@hoppay", new BigDecimal("2500"), "Alice"));
-		accountRepository.save(new Account("bob@hoppay", new BigDecimal("1400"), "Bob"));
-		accountRepository.save(new Account("carol@hoppay", new BigDecimal("800"), "Carol"));
-		accountRepository.save(new Account("dan@hoppay", new BigDecimal("1800"), "Dan"));
 	}
 
 	private void seedDevices() {
@@ -51,29 +48,16 @@ public class DemoService {
 			return;
 		}
 
-		KeyPairGenerator generator;
-		try {
-			generator = KeyPairGenerator.getInstance("RSA");
-			generator.initialize(2048);
-		} catch (Exception ex) {
-			throw new IllegalStateException("Failed to initialize key generation", ex);
-		}
-
-		for (String user : demoUsers) {
-			KeyPair keyPair = generator.generateKeyPair();
+		BigDecimal[] balances = {
+				new BigDecimal("2500"),
+				new BigDecimal("1400"),
+				new BigDecimal("800"),
+				new BigDecimal("1800")
+		};
+		for (int i = 0; i < demoOrder.size(); i++) {
+			String user = demoOrder.get(i);
 			boolean hasInternet = "dan@hoppay".equals(user);
-			BigDecimal balance = accountRepository.findByAccountId(user)
-					.map(Account::getBalance)
-					.orElse(BigDecimal.ZERO);
-
-			VirtualDevice device = new VirtualDevice(
-					user,
-					hasInternet,
-					keyPair.getPublic(),
-					keyPair.getPrivate(),
-					balance
-			);
-			meshSimulatorService.registerDevice(device);
+			deviceService.createDevice(user, demoUsers.get(user), balances[i], hasInternet);
 		}
 	}
 
@@ -83,14 +67,17 @@ public class DemoService {
 			return;
 		}
 
-		String sender = demoUsers.get(random.nextInt(demoUsers.size()));
-		String receiver = demoUsers.stream()
+		String sender = demoOrder.get(random.nextInt(demoOrder.size()));
+		String receiver = demoOrder.stream()
 				.filter(user -> !user.equals(sender))
 				.findFirst()
 				.orElse(sender);
 
 		BigDecimal amount = new BigDecimal(100 + random.nextInt(400));
-		meshSimulatorService.getDevices().get(0).createPayment(receiver, amount, cryptoService);
+		VirtualDevice device = meshSimulatorService.getDeviceById(sender);
+		if (device != null) {
+			device.createPayment(receiver, amount, cryptoService, serverKeyHolder.getPublicKey(), objectMapper);
+		}
 		meshSimulatorService.gossipOnce();
 		meshSimulatorService.flushBridges();
 	}
